@@ -1,3 +1,4 @@
+from pathlib import Path
 from threading import Event, Thread
 import wave
 import pyaudio
@@ -9,8 +10,15 @@ class TargetLayout:
     STEREO = 2
     FIVEPOINTONE = 6 # 5.1
 
-DECODER_PATH = "bin/mpegh_decoder"
-UI_MANAGER_PATH = "bin/mpegh_ui_manager"
+BIN_FOLDER = Path("bin")
+AUDIO_FOLDER = Path("audio")
+TMP_FOLDER = Path("tmp")
+
+DECODER_PATH = BIN_FOLDER / "mpegh_decoder"
+UI_MANAGER_PATH = BIN_FOLDER / "mpegh_ui_manager"
+AUDIO_OUTPUT_PATH = TMP_FOLDER / "audio"
+CONFIG_PATH = TMP_FOLDER / "config"
+SCRIPT_PATH = TMP_FOLDER / "script"
 
 class DecodeMPEGH:
     @classmethod
@@ -23,10 +31,16 @@ class DecodeMPEGH:
         target_layout: int = 1, drc_boost_scale: int = 0,
     ):
         streams_config[sample_number] = config_version
+        output_path = AUDIO_OUTPUT_PATH / f"out-{sample_number+1}.wav"
         command = (
+            # Binary
             DECODER_PATH,
-            "-if", f"audio/{input_file}.mp4", "-of", f"tmp/out-{sample_number+1}.wav",
-            "-y", f"{start_sample}", "-z", f"{start_sample + sample_amount - 1}",
+            # Audio input/output
+            "-if", AUDIO_FOLDER / f"{input_file}",
+            "-of", output_path,
+            # Configs
+            "-y", f"{start_sample}",
+            "-z", f"{start_sample + sample_amount - 1}",
             "-tl", f"{target_layout}",
             "-db", f"{drc_boost_scale}"
         )
@@ -35,7 +49,7 @@ class DecodeMPEGH:
         _, error = process.communicate()
 
         if error is None:
-            output_list[sample_number] = wave.open(f"tmp/out-{sample_number+1}.wav","rb")
+            output_list[sample_number] = wave.open(str(output_path),"rb")
             files_state[sample_number].set()
             return True
         print("[ERROR] Error while decoding.")
@@ -56,8 +70,8 @@ class DecodeMPEGH:
 def main():
     # Decoding params
     size = 1 * 48
-    amount = 30
-    input_file = "Sample1"
+    amount = 6
+    input_file = "Sample1.mp4"
     target_layout = TargetLayout.MONO
 
     # Decoding -> Playback
@@ -132,5 +146,3 @@ def main():
     stream.stop_stream()
     stream.close()
     p.terminate()
-
-main()
