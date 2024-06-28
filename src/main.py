@@ -35,9 +35,10 @@ class DecodeMPEGH:
         command = (
             # Binary
             DECODER_PATH,
-            # Audio input/output
+            # input/output files
             "-if", AUDIO_FOLDER / f"{input_file}",
             "-of", output_path,
+            "-script", SCRIPT_PATH / "script.xml",
             # Configs
             "-y", f"{start_sample}",
             "-z", f"{start_sample + sample_amount - 1}",
@@ -70,7 +71,7 @@ class DecodeMPEGH:
 def main():
     # Decoding params
     size = 1 * 48
-    amount = 6
+    amount = 60
     input_file = "Sample1.mp4"
     target_layout = TargetLayout.MONO
 
@@ -133,6 +134,13 @@ def main():
         # Re-build buffer
         y = x + buffer_ahead
         if y < amount:
+            if (y % 2) == 0:
+                target_layout = TargetLayout.MONO
+                last_config_version += 1
+            elif (y % 2) == 1:
+                target_layout = TargetLayout.STEREO
+                last_config_version += 1
+
             DecodeMPEGH.decode_parallel(
                 input_file=input_file,
                 start_sample=y*size, sample_amount=size, sample_number=y,
