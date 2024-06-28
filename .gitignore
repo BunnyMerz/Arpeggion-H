@@ -1,4 +1,7 @@
-tmp/*
-audio/*
+tmp/audio/*.wav
+tmp/config/*.xml
+tmp/script/*.xml
+audio/*.mp4
+
 bin/*
 */__pycache__/*

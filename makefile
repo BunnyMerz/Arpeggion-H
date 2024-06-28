@@ -4,5 +4,5 @@ run:
 	$(PYTHON) src
 
 clean:
-	rm ./tmp/*
+	rm ./tmp/audio/*.wav
 
