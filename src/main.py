@@ -77,11 +77,11 @@ def main():
 
     # Decoding -> Playback
     buffer_ahead = 2
-    files: list[None | bytes] = [None for _ in range(amount)]
-    files_state: list[Event] = [Event() for _ in range(amount)]
+    files: list[None | bytes] = [None for _ in range(buffer_ahead)]
+    files_state: list[Event] = [Event() for _ in range(buffer_ahead)]
     last_config_version = 0
     current_config_version = -1
-    streams_config: list[int | None] = [None for _ in range(amount)]
+    streams_config: list[int | None] = [None for _ in range(buffer_ahead)]
 
     # Playback
     chunk = size
@@ -90,7 +90,7 @@ def main():
     for x in range(buffer_ahead):
         DecodeMPEGH._decode_part(
             input_file=input_file,
-            start_sample=x*size, sample_amount=size, sample_number=x,
+            start_sample=x*size, sample_amount=size, sample_number=x % buffer_ahead,
             output_list = files, files_state=files_state,
             streams_config=streams_config, config_version=last_config_version,
             target_layout=target_layout
@@ -109,13 +109,25 @@ def main():
 
     x = 0
     while x < amount:
-        if files_state[x].is_set() is False:
-            print("[ERROR] Buffer is not long enough! Try Increasing it")
-        files_state[x].wait()
+        # Simualte skipping audio trough an interface
+        if x == 4:
+            x = 8
+            for frame in range(x, x + buffer_ahead):
+                DecodeMPEGH._decode_part(
+                    input_file=input_file,
+                    start_sample=frame*size, sample_amount=size, sample_number=frame % buffer_ahead,
+                    output_list = files, files_state=files_state,
+                    streams_config=streams_config, config_version=last_config_version,
+                    target_layout=target_layout
+                )
 
-        f = files[x]
-        if current_config_version != streams_config[x]:
-            print("Opening new stream, config version", streams_config[x])
+        if files_state[x % buffer_ahead].is_set() is False:
+            print("[ERROR] Buffer is not long enough! Try Increasing it")
+        files_state[x % buffer_ahead].wait()
+
+        f = files[x % buffer_ahead]
+        if current_config_version != streams_config[x % buffer_ahead]:
+            print("Opening new stream, config version", streams_config[x % buffer_ahead])
             stream.stop_stream()
             stream.close()
             stream = p.open(
@@ -124,26 +136,30 @@ def main():
                 rate = f.getframerate(),
                 output = True
             )
-            current_config_version = streams_config[x]
+            current_config_version = streams_config[x % buffer_ahead]
 
         data = f.readframes(chunk)
         while data:
             stream.write(data)
             data = f.readframes(chunk)
 
+        files[x % buffer_ahead] = None
+        files_state[x % buffer_ahead].clear()
+        streams_config[x % buffer_ahead] = None
+
         # Re-build buffer
         y = x + buffer_ahead
         if y < amount:
-            if (y % 2) == 0:
-                target_layout = TargetLayout.MONO
-                last_config_version += 1
-            elif (y % 2) == 1:
-                target_layout = TargetLayout.STEREO
-                last_config_version += 1
+            # if (y % 2) == 0:
+            #     target_layout = TargetLayout.MONO
+            #     last_config_version += 1
+            # elif (y % 2) == 1:
+            #     target_layout = TargetLayout.STEREO
+            #     last_config_version += 1
 
             DecodeMPEGH.decode_parallel(
                 input_file=input_file,
-                start_sample=y*size, sample_amount=size, sample_number=y,
+                start_sample=y*size, sample_amount=size, sample_number=y % buffer_ahead,
                 output_list=files, files_state=files_state,
                 streams_config=streams_config, config_version=last_config_version,
                 target_layout=target_layout,
