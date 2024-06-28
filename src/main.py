@@ -76,12 +76,12 @@ def main():
     target_layout = TargetLayout.MONO
 
     # Decoding -> Playback
-    buffer_ahead = 2
-    files: list[None | bytes] = [None for _ in range(buffer_ahead)]
+    buffer_ahead: int = 2 # must be >= 2
+    files: list[None | bytes] = [None] * buffer_ahead
     files_state: list[Event] = [Event() for _ in range(buffer_ahead)]
-    last_config_version = 0
-    current_config_version = -1
-    streams_config: list[int | None] = [None for _ in range(buffer_ahead)]
+    last_config_version: int = 0
+    current_config_version: int = -1
+    streams_config: list[int | None] = [None] * buffer_ahead
 
     # Playback
     chunk = size
@@ -107,27 +107,27 @@ def main():
     )
     current_config_version = streams_config[0]
 
-    x = 0
-    while x < amount:
+    current_frame = 0
+    while current_frame < amount:
         # Simualte skipping audio trough an interface
-        if x == 4:
-            x = 8
-            for frame in range(x, x + buffer_ahead):
+        if current_frame == 4:
+            current_frame = 8
+            for next_frames in range(current_frame, current_frame + buffer_ahead):
                 DecodeMPEGH._decode_part(
                     input_file=input_file,
-                    start_sample=frame*size, sample_amount=size, sample_number=frame % buffer_ahead,
+                    start_sample=next_frames*size, sample_amount=size, sample_number=next_frames % buffer_ahead,
                     output_list = files, files_state=files_state,
                     streams_config=streams_config, config_version=last_config_version,
                     target_layout=target_layout
                 )
 
-        if files_state[x % buffer_ahead].is_set() is False:
+        if files_state[current_frame % buffer_ahead].is_set() is False:
             print("[ERROR] Buffer is not long enough! Try Increasing it")
-        files_state[x % buffer_ahead].wait()
+        files_state[current_frame % buffer_ahead].wait()
 
-        f = files[x % buffer_ahead]
-        if current_config_version != streams_config[x % buffer_ahead]:
-            print("Opening new stream, config version", streams_config[x % buffer_ahead])
+        f = files[current_frame % buffer_ahead]
+        if current_config_version != streams_config[current_frame % buffer_ahead]:
+            print("Opening new stream, config version", streams_config[current_frame % buffer_ahead])
             stream.stop_stream()
             stream.close()
             stream = p.open(
@@ -136,19 +136,19 @@ def main():
                 rate = f.getframerate(),
                 output = True
             )
-            current_config_version = streams_config[x % buffer_ahead]
+            current_config_version = streams_config[current_frame % buffer_ahead]
 
         data = f.readframes(chunk)
         while data:
             stream.write(data)
             data = f.readframes(chunk)
 
-        files[x % buffer_ahead] = None
-        files_state[x % buffer_ahead].clear()
-        streams_config[x % buffer_ahead] = None
+        files[current_frame % buffer_ahead] = None
+        files_state[current_frame % buffer_ahead].clear()
+        streams_config[current_frame % buffer_ahead] = None
 
         # Re-build buffer
-        y = x + buffer_ahead
+        y = current_frame + buffer_ahead
         if y < amount:
             # if (y % 2) == 0:
             #     target_layout = TargetLayout.MONO
@@ -164,7 +164,7 @@ def main():
                 streams_config=streams_config, config_version=last_config_version,
                 target_layout=target_layout,
             )
-        x += 1
+        current_frame += 1
 
     # End
     stream.stop_stream()
