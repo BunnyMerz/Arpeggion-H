@@ -2,10 +2,13 @@ import subprocess
 import wave
 from config import AUDIO_OUTPUT_PATH, DECODER_PATH, AUDIO_FOLDER, Config
 from utils import thread_it
+import logging
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from player import Buffer
+
+logger = logging.getLogger(__name__)
 
 class MPEGHDecoder:
     @classmethod
@@ -30,15 +33,19 @@ class MPEGHDecoder:
                 "-db", f"{config.drc_boost_scale}"
             )
 
+            logger.info(" - Starting to decode Frame %s", sample_number)
             process = subprocess.Popen(command, stdout=subprocess.PIPE)
             _, error = process.communicate()
+            logger.info(" - Done with Frame %s", sample_number)
 
             if error is None: # The MPEG-H binary might not return an error when things go wrong
+                logger.info(" - Setting buffer for %s", sample_number)
                 buffer.set_buffer(sample_number, wave.open(str(output_path),"rb"), config.config_version_counter)
                 return True
-            print("[ERROR] Error while decoding.")
+            logger.critical("[ERROR] Error while decoding Frame %s", sample_number)
             buffer.set_buffer(sample_number, b"", config.config_version_counter)
             return False
         except:
             buffer.set_buffer(sample_number, b"", config.config_version_counter)
+            logger.exception("[ERROR] Error while decoding Frame %s", sample_number)
             raise

@@ -10,7 +10,7 @@ def main():
         target_layout = TargetLayout.MONO,
         drc_boost_scale=0,
     )
-    player = Player(config=config, buffer_size=3)
+    player = Player(config=config, buffer_size=10)
     player.play()
 
 

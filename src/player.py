@@ -5,6 +5,9 @@ from pyaudio import PyAudio
 from config import Config
 from mpegh import MPEGHDecoder
 
+import logging
+logger = logging.getLogger(__name__)
+
 class BufferSample:
     def __init__(self) -> None:
         self.buffer: None | Wave_read = None # Wave_read, basically bytes, to read from
@@ -99,14 +102,17 @@ class Player:
             buffer: BufferSample = self.buffer.read_buffer(curr_frame)
 
             if self.current_stream_config != buffer.buffer_config:
-                print("Opening new stream, config version", buffer.buffer_config)
+                logger.info("Opening new stream, config version %s", buffer.buffer_config)
                 self.close_stream()
                 self.set_stream(buffer.buffer)
                 self.current_stream_config = buffer.buffer_config
 
+            logger.info("Playing Frame %s", curr_frame)
             self.play_audio(buffer.buffer)
             self.buffer.unset_buffer(curr_frame)
 
             if self.current_frame == curr_frame:
                 self.current_frame += 1
+
+            logger.info("Filling buffer")
             self.fill_buffer(thread_it=True)
