@@ -1,4 +1,5 @@
 tmp/audio/*.wav
+tmp/audio/*.mp4
 tmp/config/*.xml
 tmp/script/*.xml
 audio/*.mp4
