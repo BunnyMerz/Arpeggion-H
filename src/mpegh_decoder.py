@@ -1,6 +1,6 @@
 import subprocess
 import wave
-from config import AUDIO_OUTPUT_PATH, DECODER_PATH, AUDIO_FOLDER, Config
+from config import AUDIO_OUTPUT_PATH, DECODER_PATH, Config
 from utils import thread_it
 import logging
 
@@ -24,7 +24,7 @@ class MPEGHDecoder:
                 # Binary
                 DECODER_PATH,
                 # input/output files
-                "-if", AUDIO_FOLDER / f"{config.input_file}",
+                "-if", f"{config.input_file}",
                 "-of", output_path,
                 # Configs
                 "-y", f"{sample_number * config.sample_size}",

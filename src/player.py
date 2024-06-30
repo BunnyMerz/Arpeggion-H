@@ -1,4 +1,5 @@
 from threading import Event
+from typing import Callable
 from wave import Wave_read
 from pyaudio import PyAudio
 
@@ -6,6 +7,8 @@ from config import Config
 from mpegh_decoder import MPEGHDecoder
 
 import logging
+
+from utils import thread_it
 logger = logging.getLogger(__name__)
 
 class BufferSample:
@@ -93,6 +96,11 @@ class Player:
             )
             self.current_buffer_frame += 1
 
+    def re_fill_buffer(self):
+        self.buffer.reset_all_buffer()
+        self.current_buffer_frame = self.current_frame
+        self.fill_buffer(thread_it=True)
+
     def play_audio(self, wave: Wave_read):
         data = wave.readframes(self.chunk)
         while data:
@@ -100,6 +108,7 @@ class Player:
             self.current_stream.write(data)
             data = wave.readframes(self.chunk)
 
+    @thread_it
     def play(self):
         self.fill_buffer(thread_it=False)
         while not self.abort:

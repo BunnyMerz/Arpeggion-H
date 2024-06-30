@@ -29,12 +29,12 @@ IIS_UIM_CMD_AUDIO_LANGUAGE_SELECTED = 70
 IIS_UIM_CMD_INTERFACE_LANGUAGE_SELECTED = 71
 IIS_UIM_CMD_SET_GUID = 90
 
-class EventAction:
+class ActionEvent:
     def __init__(
             self,
             uuid: str, action_type: int,
             param_int: int = None, param_float: float = None, param_text: str = None, param_bool: bool = None,
-            version: str = "11.1",
+            version: str = "11.0",
         ) -> None:
         self.uuid = uuid
         self.version = version
@@ -49,20 +49,29 @@ class EventAction:
             ("uuid", self.uuid),
             ("version", self.version),
             ("actionType", self.action_type),
+            ("paramText", self.param_text),
             ("paramInt", self.param_int),
             ("paramFloat", self.param_float),
-            ("paramText", self.param_text),
             ("paramBool", self.param_bool),
         )
         params = str.join(" ", [f'{name}="{value}"' for name, value in params if value is not None])
-        return f"<EventAction {params}/>"
+        return f"<ActionEvent {params} />"
     
     @classmethod
     def select_preset(cls, uuid: str, preset_id: int):
-        return cls(
+        return ActionEvent(
             uuid=uuid,
             action_type=IIS_UIM_CMD_PRESET_SELECTED,
             param_int=preset_id,
+        )
+    
+    @classmethod
+    def select_language(cls, lang_name: str):
+        return ActionEvent(
+            uuid="00000000-0000-0000-0000-000000000000",
+            action_type=IIS_UIM_CMD_AUDIO_LANGUAGE_SELECTED,
+            param_text=lang_name,
+            param_int=0,
         )
 
 class MPEGHUIManager:
@@ -70,9 +79,9 @@ class MPEGHUIManager:
         self.input_file = input_file
         self.output_file = output_file
         self.script_path = script_path
-        self.event_actions: list[EventAction] = []
+        self.event_actions: list[ActionEvent] = []
 
-    def add_event_action(self, event: EventAction):
+    def add_event_action(self, event: ActionEvent):
         self.event_actions.append(event)
 
     def build_script(self):
@@ -95,3 +104,5 @@ class MPEGHUIManager:
 
         if error is None:
             pass
+
+# <ActionEvent uuid="00000000-0000-0000-0000-000000000000" version="11.0" actionType="70" paramText="ger" paramInt="0" />

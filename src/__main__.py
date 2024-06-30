@@ -9,7 +9,7 @@ except ImportError:
 if RichHandler is not None:
     log_format = "%(message)s"
     log_handler = RichHandler(rich_tracebacks=True, omit_repeated_times=False)
-    logging.basicConfig(level=logging.INFO, format=log_format, handlers=[log_handler])
+    logging.basicConfig(level=logging.ERROR, format=log_format, handlers=[log_handler])
 else:
     log_format = (
         "[%(levelname)-7s] %(asctime)s | "
@@ -17,6 +17,6 @@ else:
         # "[%(process)d %(processName)s | %(thread)d %(threadName)s] "
         "> %(message)s"
     ),
-    logging.basicConfig(level=logging.INFO, format=log_format)
+    logging.basicConfig(level=logging.ERROR, format=log_format)
 
 main()
