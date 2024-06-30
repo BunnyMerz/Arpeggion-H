@@ -77,6 +77,12 @@ class Player:
             output = True
         )
 
+    def skip_to(self, seconds: int):
+        self.current_frame = seconds
+        self.current_buffer_frame = seconds
+        self.buffer.reset_all_buffer()
+        self.fill_buffer(thread_it=False)
+
     def fill_buffer(self, thread_it: bool):
         while self.current_frame + self.buffer.buffer_size > self.current_buffer_frame:
             MPEGHDecoder.decode_sample(
