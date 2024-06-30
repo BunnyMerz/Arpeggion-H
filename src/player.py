@@ -3,7 +3,7 @@ from wave import Wave_read
 from pyaudio import PyAudio
 
 from config import Config
-from mpegh import MPEGHDecoder
+from mpegh_decoder import MPEGHDecoder
 
 import logging
 logger = logging.getLogger(__name__)

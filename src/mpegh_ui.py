@@ -3,6 +3,8 @@ from config import UI_MANAGER_PATH
 
 import logging
 
+from utils import Command
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,18 +66,32 @@ class EventAction:
         )
 
 class MPEGHUIManager:
-    @classmethod
-    def apply_scene_state(cls):
-        command = (
-            # Binary
-            UI_MANAGER_PATH,
-            # Input
-            "-if", "",
-            "-script", "",
-            # Output
-            "-of", "",
-            "-xmlSceneState ", "",
-        )
+    def __init__(self, input_file: str, output_file: str, script_path: str) -> None:
+        self.input_file = input_file
+        self.output_file = output_file
+        self.script_path = script_path
+        self.event_actions: list[EventAction] = []
+
+    def add_event_action(self, event: EventAction):
+        self.event_actions.append(event)
+
+    def build_script(self):
+        if self.script_path is not None:
+            with open(self.script_path, "w+") as f:
+                f.writelines(
+                    [str(e)+"\n" for e in self.event_actions]
+                )
+
+    def apply_scene_state(self, scene_output: str = None):
+        self.build_script()
+        command = Command(UI_MANAGER_PATH)\
+            ._if(self.input_file)\
+            .script(self.script_path)\
+            .of(self.output_file)\
+            .xmlSceneState(scene_output)
 
         process = Popen(command, stdout=PIPE)
         _, error = process.communicate()
+
+        if error is None:
+            pass
