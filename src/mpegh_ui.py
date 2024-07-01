@@ -132,7 +132,16 @@ class MPEGHUIManager:
             .xmlSceneState(scene_output)
 
         process = Popen(list(command), stdout=PIPE)
-        _, error = process.communicate()
+        logger.critical("Manager")
+        output, error = process.communicate()
+
+        duration = 0
+        timescale = 0
+        for line in output.decode("utf-8").split("\n"):
+            if "-- Duration" in line:
+                duration = int(line.strip("-- Duration:\n"))
+            if "-- Timescale" in line:
+                timescale = int(line.strip("-- Timescale:\n"))
 
         if scene_output is not None:
             lines_to_write: list[str] = []
@@ -146,3 +155,5 @@ class MPEGHUIManager:
 
             with open(scene_output, "w") as f:
                 f.writelines(lines_to_write)
+
+        return int(duration/timescale) - 1

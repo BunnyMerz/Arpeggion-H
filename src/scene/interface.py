@@ -8,9 +8,9 @@ from scene.scene_reader import AudioElementSwitch, AudioSceneConfig
 
 
 class PropUI:
-    def __init__(self, window: Misc, prop: Prop):
+    def __init__(self, master: Misc, prop: Prop):
         self.prop = prop
-        self.window = window
+        self.master = master
 
     def grid(self, row: int, column: int):
         kw: dict[str, float | None] = {
@@ -18,7 +18,7 @@ class PropUI:
             "to": self.prop.max,
         }
         n_kw = {k: v for k,v in kw.items() if v is not None}
-        w = Scale(self.window, **n_kw, orient=HORIZONTAL) # type: ignore
+        w = Scale(self.master, **n_kw, orient=HORIZONTAL) # type: ignore
         w.set(self.prop.val)
         w.grid(row=row, column=column)
 
@@ -37,17 +37,22 @@ class Interface:
         self.window.title("MPEG-H 3D Audio Player")
         self.window.resizable(None, None)
 
+        self.lang = "eng"
+
         tab_control = Notebook(self.window)
-        lang = "eng"
+        tab_control.pack()
+
+        self.player.frame_slider = IntVar()
+        Scale(self.window, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).pack()
 
         self._vars = []
 
         for preset in scene.presets.values():
             tab = Frame(tab_control)
-            tab_control.add(tab, text=preset.get_desc(lang))
+            tab_control.add(tab, text=preset.get_desc(self.lang))
             row = 0
             for audio in list(preset.audio_element_switch.values()) + list(preset.audio_elements.values()):
-                Label(tab, text=audio.get_desc(lang)).grid(row=row, column=MAIN_PARAGRAPH_COL)
+                Label(tab, text=audio.get_desc(self.lang)).grid(row=row, column=MAIN_PARAGRAPH_COL)
 
                 if audio.muting is not None:
                     chk_state = BooleanVar(tab)
@@ -65,7 +70,7 @@ class Interface:
                     row += 1
 
                 if isinstance(audio, AudioElementSwitch):
-                    audios_options = [x.get_desc(lang) for x in audio.audio_elements.values()]
+                    audios_options = [x.get_desc(self.lang) for x in audio.audio_elements.values()]
                     if audios_options != []:
                         value_inside = StringVar(tab)
                         value_inside.set(audios_options[0])
@@ -75,8 +80,6 @@ class Interface:
 
                 Separator(tab, orient='horizontal').grid(row=row, columnspan=4, sticky="ew")
                 row += 1
-
-        tab_control.pack()
 
     def run(self):
         self.window.mainloop()

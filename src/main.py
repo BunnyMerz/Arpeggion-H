@@ -6,15 +6,15 @@ from scene.scene_reader import AudioSceneConfig
 
 
 def main():
-    input_file = AUDIO_FOLDER / "Sample1.mp4"
+    input_file = AUDIO_FOLDER / "STD_AUDIO_X1.mp4"
 
     ui = MPEGHUIManager(input_file = str(input_file), output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
-    ui.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
+    duration = ui.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
 
     config = Config(
         input_file = ui.output_file,
         sample_size = 1 * SYNC_SAMPLE_SIZE,
-        duration_in_seconds = 60, # 1 minute video
+        duration_in_seconds = duration, # 1 minute video
         target_layout = TargetLayout.STEREO,
         drc_boost_scale=0,
     )

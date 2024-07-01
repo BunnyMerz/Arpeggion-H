@@ -1,7 +1,7 @@
 from threading import Event
-from typing import Callable
+from tkinter import IntVar
 from wave import Wave_read
-from pyaudio import PyAudio
+from pyaudio import PyAudio, Stream
 
 from config import Config
 from mpegh_decoder import MPEGHDecoder
@@ -51,19 +51,32 @@ class Player:
     def __init__(self, config: Config, buffer_size: int) -> None:
         self.pyaudio_lib = PyAudio()
 
-        self.current_stream = None
-        self.current_stream_config = None
+        self.current_stream: Stream | None = None
+        self.current_stream_config: int | None = None
 
-        self.current_frame = 0
+        self._current_frame = 0
+        self.frame_slider: IntVar | None = None
         self.current_buffer_frame = 0
 
         self.config = config
         self.buffer = Buffer(buffer_size)
         self.chunk = self.config.sample_size
 
-        self.pause = Event()
-        self.pause.set()
+        self.is_paused = False
+        self.pause_event = Event()
+        self.pause_event.set()
         self.abort = False
+
+    @property
+    def current_frame(self):
+        if self.frame_slider is not None and self.frame_slider.get() != self._current_frame:
+            self.skip_to(self.frame_slider.get())
+        return self._current_frame
+    @current_frame.setter
+    def current_frame(self, value: int):
+        self._current_frame = value
+        if self.frame_slider is not None:
+            self.frame_slider.set(self._current_frame)
 
     def close_stream(self):
         if self.current_stream is None:
@@ -92,7 +105,7 @@ class Player:
                 config = self.config,
                 buffer = self.buffer,
                 sample_number = self.current_buffer_frame,
-                thread_it = thread_it,
+                thread_it = thread_it, # type: ignore
             )
             self.current_buffer_frame += 1
 
@@ -104,26 +117,39 @@ class Player:
     def play_audio(self, wave: Wave_read):
         data = wave.readframes(self.chunk)
         while data:
-            self.pause.wait()
-            self.current_stream.write(data)
+            self.pause_event.wait()
+            self.current_stream.write(data) # type: ignore
             data = wave.readframes(self.chunk)
+
+    def resume(self):
+        self.is_paused = False
+        self.pause_event.set()
+    def pause(self):
+        self.is_paused = True
+        self.pause_event.clear()
+    def reset(self):
+        self.skip_to(0)
+        self.pause()
 
     @thread_it
     def play(self):
         self.fill_buffer(thread_it=False)
         while not self.abort:
-            self.pause.wait()
+            if self.current_frame >= self.config.duration_in_seconds:
+                self.reset()
+
+            self.pause_event.wait()
             curr_frame = self.current_frame
             buffer: BufferSample = self.buffer.read_buffer(curr_frame)
 
             if self.current_stream_config != buffer.buffer_config:
                 logger.info("Opening new stream, config version %s", buffer.buffer_config)
                 self.close_stream()
-                self.set_stream(buffer.buffer)
+                self.set_stream(buffer.buffer) # type: ignore
                 self.current_stream_config = buffer.buffer_config
 
             logger.info("Playing Frame %s", curr_frame)
-            self.play_audio(buffer.buffer)
+            self.play_audio(buffer.buffer) # type: ignore
             self.buffer.unset_buffer(curr_frame)
 
             if self.current_frame == curr_frame:
