@@ -1,4 +1,4 @@
-from scene.props import ProminenceLevelProp, MutingProp, AzimuthProp, ElevationProp
+from scene.props import ProminenceLevelProp, MutingProp, AzimuthProp, ElevationProp, Prop
 from xml.etree import ElementTree as XML
 
 
@@ -53,7 +53,14 @@ class AudioElement(Element):
         # When inside element_switch
         self.is_default = is_default
         self.is_selectable = is_selectable
-    
+
+    def get_desc(self, lang: str | None = None):
+        if lang is not None and lang in self.description:
+            return self.description[lang]
+        for lang in self.description:
+            return self.description[lang]
+        return "-"
+
     @classmethod
     def parse(cls, tree: XML.Element):
         prominence_level: ProminenceLevelProp | None = None
@@ -86,6 +93,14 @@ class AudioElement(Element):
             is_default = try_attrib(tree, "isDefault", lambda x: x is True),
             is_selectable = try_attrib(tree, "isSelectable", lambda x: x is True),
         )
+    
+    def slider_props(self):
+        props: list[Prop | None] = [
+            self.prominence_level,
+            self.azimuth,
+            self.elevation,
+        ]
+        return [x for x in props if x is not None]
 
 class AudioElementSwitch(Element):
     def __init__(
@@ -96,6 +111,7 @@ class AudioElementSwitch(Element):
             azimuth: AzimuthProp | None = None,
             elevation: ElevationProp | None = None,
             description: dict[str, str] | None = None,
+            audio_elements: dict[int, AudioElement] | None = None,
             is_available: bool | None = None, is_action_allowed: bool | None = None,
         ) -> None:
         super().__init__(
@@ -105,10 +121,25 @@ class AudioElementSwitch(Element):
             azimuth=azimuth,
             elevation=elevation,
         )
-        self.audio_elements: dict[int, AudioElement] = {}
+        self.audio_elements: dict[int, AudioElement] = audio_elements if audio_elements is not None else {}
         self.description: dict[str, str] = description if description is not None else {}
         self.is_available = is_available
         self.is_action_allowed = is_action_allowed
+
+    def get_desc(self, lang: str | None = None):
+        if lang is not None and lang in self.description:
+            return self.description[lang]
+        for lang in self.description:
+            return self.description[lang]
+        return "-"
+
+    def slider_props(self):
+        props: list[Prop | None] = [
+            self.prominence_level,
+            self.azimuth,
+            self.elevation,
+        ]
+        return [x for x in props if x is not None]
 
     @classmethod
     def parse(cls, tree: XML.Element):
@@ -130,9 +161,10 @@ class AudioElementSwitch(Element):
                 elevation = ElevationProp.parse(child)
             if child.tag == "customKind":
                 description = custom_kind(child)
-            elif child.tag == "audioElement":
-                _e = AudioElement.parse(child)
-                audios[_e.id] = _e
+            elif child.tag == "audioElements":
+                for audio_elemnt in child:
+                    _e = AudioElement.parse(audio_elemnt)
+                    audios[_e.id] = _e
 
         return AudioElementSwitch(
             _id = int(tree.attrib["id"]),
@@ -141,6 +173,7 @@ class AudioElementSwitch(Element):
             muting = muting,
             azimuth = azimuth,
             elevation = elevation,
+            audio_elements=audios,
             is_available = tree.attrib["isAvailable"] is True,
             is_action_allowed = tree.attrib["isActionAllowed"] is True,
         )
@@ -162,6 +195,13 @@ class Preset:
         self.description: dict[str, str] = description if description is not None else {}
         self.audio_elements: dict[int, AudioElement] = audio_elements if audio_elements is not None else {}
         self.audio_element_switch: dict[int, AudioElementSwitch] = audio_element_switch if audio_element_switch is not None else {}
+
+    def get_desc(self, lang: str | None = None):
+        if lang is not None and lang in self.description:
+            return self.description[lang]
+        for lang in self.description:
+            return self.description[lang]
+        return "-"
 
     @classmethod
     def parse(cls, tree: XML.Element):

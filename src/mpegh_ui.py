@@ -134,7 +134,15 @@ class MPEGHUIManager:
         process = Popen(list(command), stdout=PIPE)
         _, error = process.communicate()
 
-        if error is None:
-            pass
+        if scene_output is not None:
+            lines_to_write: list[str] = []
+            lines: list[str] = []
+            with open(scene_output, "r") as f:
+                lines = f.readlines()
+            for line in lines:
+                if "<?xml" in line:
+                    lines_to_write = []
+                lines_to_write.append(line)
 
-# <ActionEvent uuid="00000000-0000-0000-0000-000000000000" version="11.0" actionType="70" paramText="ger" paramInt="0" />
+            with open(scene_output, "w") as f:
+                f.writelines(lines_to_write)

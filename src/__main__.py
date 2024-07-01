@@ -1,6 +1,5 @@
 from main import main
 import logging
-from scene.scene_reader import AudioSceneConfig
 
 try:
     from rich.logging import RichHandler
@@ -20,6 +19,4 @@ else:
     )
     logging.basicConfig(level=logging.ERROR, format=log_format)
 
-# main()
-
-a = AudioSceneConfig.start_parsing("tmp/config/scene_state.xml")
+main()

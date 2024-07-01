@@ -5,10 +5,12 @@ from xml.etree import ElementTree as XML
 class Prop:
     def __init__(
             self,
+            name: str = "Prop",
             is_action_allowed: bool | None = None,
             min: float | None = None, max: float | None = None,
-            val: float | None = None, default: float | None = None,
+            val: bool | float | None = None, default: bool | float | None = None,
         ) -> None:
+        self.name = name
         self.is_action_allowed = is_action_allowed
         self.min = min
         self.max = max
@@ -17,13 +19,25 @@ class Prop:
 
     @classmethod
     def parse(cls, tree: XML.Element):
-        attrib = defaultdict(lambda: None, **tree.attrib)
+        attrib: defaultdict[str, None | str] = defaultdict(lambda: None, **tree.attrib)
+        _min = float(attrib["min"]) if attrib["min"] is not None else None
+        _max = float(attrib["max"]) if attrib["max"] is not None else None
+        val = attrib["val"]
+        if val == "false" or val == "true":
+            val = val == "true"
+        elif val is not None:
+            val = float(val)
+        default = attrib["def"]
+        if default == "false" or default == "true":
+            default = default == "true"
+        elif default is not None:
+            default = float(default)
         return cls(
             is_action_allowed = attrib["isActionAllowed"] is True,
-            min = float(attrib["min"]) if attrib["min"] is not None else None,
-            max = float(attrib["max"]) if attrib["max"] is not None else None,
-            val = float(attrib["val"]) if attrib["val"] is not None else None,
-            default = float(attrib["def"]) if attrib["def"] is not None else None,
+            min = _min,
+            max = _max,
+            val = val,
+            default = default,
         )
 
 class ProminenceLevelProp(Prop):
@@ -34,20 +48,24 @@ class ProminenceLevelProp(Prop):
             val: float, default: float,
         ) -> None:
         return super().__init__(
-            is_action_allowed,
-            min, max, val, default,
+            name="Prominence",
+            is_action_allowed=is_action_allowed,
+            min=min, max=max, val=val, default=default,
         )
 
 class MutingProp(Prop):
     def __init__(
             self,
             is_action_allowed: bool,
-            val: float, default: float,
+            val: bool, default: bool, min, max,
         ) -> None:
-        return super().__init__(
-            is_action_allowed,
-           val, default,
+        super().__init__(
+            name="Enabled",
+            is_action_allowed=is_action_allowed,
+            val=val, default=default,
         )
+        self.val: bool
+        self.default: bool
 
 class AzimuthProp(Prop):
     def __init__(
@@ -57,8 +75,9 @@ class AzimuthProp(Prop):
             val: float, default: float,
         ) -> None:
         return super().__init__(
-            is_action_allowed,
-            min, max, val, default,
+            name="Azimuth",
+            is_action_allowed=is_action_allowed,
+            min=min, max=max, val=val, default=default,
         )
 
 class ElevationProp(Prop):
@@ -69,6 +88,7 @@ class ElevationProp(Prop):
             val: float, default: float,
         ) -> None:
         return super().__init__(
-            is_action_allowed,
-            min, max, val, default,
+            name="Elevation",
+            is_action_allowed=is_action_allowed,
+            min=min, max=max, val=val, default=default,
         )

@@ -6,3 +6,5 @@ sudo apt-get install ffmpeg libav-tools
 pip install pyaudio
 
 pip install rich
+
+pip install tk
