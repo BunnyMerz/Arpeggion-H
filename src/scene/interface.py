@@ -26,7 +26,19 @@ MAIN_PARAGRAPH_COL = 0
 CONTENT_LABEL_COL = 1
 CONTENT_COL_PREFIX = 2
 CONTENT_COL = 3
-CONTENT_COL_sufix = 4
+CONTENT_COL_SUFIX = 4
+
+def pause_or_resume(resume_fn, pause_fn, is_paused, bttn):
+    if is_paused:
+        bttn.config(text="Pause")
+        pause_fn()
+    else:
+        bttn.config(text="Play")
+        resume_fn()
+def reset(reset_fn, pause_bttn):
+    pause_bttn.config(text="Play")
+    reset_fn()
+
 class Interface:
     def __init__(self, scene: AudioSceneConfig, player: Player, ui_manager: MPEGHUIManager) -> None:
         self.scene = scene
@@ -40,10 +52,13 @@ class Interface:
         self.lang = "eng"
 
         tab_control = Notebook(self.window)
-        tab_control.pack()
+        tab_control.grid(row=0, column=0, columnspan=3)
 
         self.player.frame_slider = IntVar()
-        Scale(self.window, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).pack()
+        pause_bttn = Button(self.window, text=["Pause", "Play"][self.player.is_paused], command=lambda: pause_or_resume(self.player.pause, self.player.resume, self.player.is_paused, pause_bttn))
+        pause_bttn.grid(row=1, column=0)
+        Button(self.window, text="Reset", command=lambda: reset(self.player.reset, pause_bttn)).grid(row=1, column=1)
+        Scale(self.window, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).grid(row=1, column=2)
 
         self._vars = []
 
