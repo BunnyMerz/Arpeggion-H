@@ -1,5 +1,12 @@
+from pathlib import Path
 from threading import Thread
 
+class PathPointer:
+    def __init__(self, path: Path) -> None:
+        self.path: Path = path
+
+    def __str__(self) -> str:
+        return str(self.path)
 
 def thread_it(fn):
     def _thread(*args, thread_it: bool = False, **kw):

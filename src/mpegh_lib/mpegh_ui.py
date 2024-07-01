@@ -3,7 +3,7 @@ from config import UI_MANAGER_PATH
 
 import logging
 
-from utils import Command
+from utils import Command, PathPointer
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class ActionEvent:
         )
 
 class MPEGHUIManager:
-    def __init__(self, input_file: str, output_file: str, script_path: str) -> None:
+    def __init__(self, input_file: PathPointer, output_file: str, script_path: str) -> None:
         self.input_file = input_file
         self.output_file = output_file
         self.script_path = script_path
@@ -159,7 +159,7 @@ class MPEGHUIManager:
     def apply_scene_state(self, scene_output: str | None = None):
         self.build_script()
         command = Command(str(UI_MANAGER_PATH))\
-            ._if(self.input_file)\
+            ._if(str(self.input_file))\
             .script(self.script_path)\
             .of(self.output_file)\
             .xmlSceneState(scene_output)

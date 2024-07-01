@@ -3,12 +3,13 @@ from mpegh_lib.mpegh_ui import MPEGHUIManager
 from player import Player
 from scene.interface import Interface
 from scene.scene_reader import AudioSceneConfig
+from utils import PathPointer
 
 
 def main():
-    input_file = AUDIO_FOLDER / "Sample1.mp4"
+    input_file = PathPointer(AUDIO_FOLDER / "Sample1.mp4")
 
-    ui = MPEGHUIManager(input_file = str(input_file), output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
+    ui = MPEGHUIManager(input_file = input_file, output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
     duration = ui.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
 
     config = Config(
@@ -24,5 +25,5 @@ def main():
 
     
     scene = AudioSceneConfig.start_parsing("tmp/config/scene_state.xml")
-    interface = Interface(scene, player, ui)
+    interface = Interface(scene, player, ui, input_file)
     interface.run()

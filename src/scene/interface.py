@@ -1,12 +1,14 @@
 from collections import defaultdict
 from functools import partial
-from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL
+from pathlib import Path
+from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL, Menu, filedialog
 from tkinter.ttk import Checkbutton, Notebook, Frame, Separator
 
 from mpegh_lib.mpegh_ui import ActionEvent, MPEGHUIManager
 from player import Player
 from scene.props import Prop, ProminenceLevelProp, MutingProp, AzimuthProp, ElevationProp
 from scene.scene_reader import AudioElement, AudioElementSwitch, AudioSceneConfig, Preset
+from utils import PathPointer
 
 
 prop_to_event = {
@@ -68,16 +70,43 @@ def reset(reset_fn, pause_bttn):
     reset_fn()
 
 class Interface:
-    def __init__(self, scene: AudioSceneConfig, player: Player, ui_manager: MPEGHUIManager) -> None:
+    def __init__(self, scene: AudioSceneConfig, player: Player, ui_manager: MPEGHUIManager, input_file: PathPointer) -> None:
         self.scene = scene
         self.player = player
         self.ui_manager = ui_manager
+        self.input_file = input_file
 
         self.window = Tk()
         self.window.title("MPEG-H 3D Audio Player")
         self.window.resizable(None, None)
 
         self.lang = "eng"
+
+        menu = Menu(self.window)
+
+        def browseFiles():
+            filename = filedialog.askopenfilename(
+                initialdir = "./",
+                title = "Select a File",
+                filetypes = (("MP4 files","*.mp4*"),("all files","*.*"))
+            )
+            input_file.path = Path(filename)
+        file = Menu(menu, tearoff=0)
+        file.add_command(label='Open', command=browseFiles)
+        menu.add_cascade(label='File', menu=file)
+
+        def change_lang(lang: str):
+            self.lang = lang
+            self.ui_manager.add_event_action(ActionEvent.select_language(lang))
+            self.ui_manager.apply_scene_state()
+            self.player.re_fill_buffer(thread_it=False)
+
+        language = Menu(menu, tearoff=0)
+        language.add_command(label='Inglês', command=lambda: change_lang("eng"))
+        language.add_command(label='Deutsch', command=lambda: change_lang("ger"))
+        language.add_command(label='Español', command=lambda: change_lang("spa"))
+        menu.add_cascade(label='Language', menu=language)
+        self.window.config(menu=menu)
 
         tab_control = Notebook(self.window)
         tab_control.grid(row=0, column=0, columnspan=3)
