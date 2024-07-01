@@ -5,4 +5,6 @@ tmp/script/*.xml
 audio/*.mp4
 
 bin/*
-*/__pycache__/*
+*/__pycache__/
+*/*/__pycache__/
+settings.json
