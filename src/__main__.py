@@ -1,3 +1,4 @@
+from sys import argv
 from main import main
 import logging
 
@@ -19,4 +20,14 @@ else:
     )
     logging.basicConfig(level=logging.ERROR, format=log_format)
 
-main()
+logger = logging.getLogger(__name__)
+
+file_name = None
+for i, arg in enumerate(argv):
+    if arg == "-file":
+        if i+1 >= len(argv):
+            raise Exception("Missing <file_name> in -file")
+        file_name = argv[i+1]
+if file_name is None:
+    raise Exception("Missing -file <file_name>")
+main(file_name)
