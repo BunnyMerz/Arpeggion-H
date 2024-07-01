@@ -10,6 +10,7 @@ def thread_it(fn):
             target=fn,
             args=args,
             kwargs=kw,
+            daemon=True,
         )
         t.start()
         return t

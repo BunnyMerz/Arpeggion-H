@@ -1,5 +1,5 @@
 from config import Config, TargetLayout, SYNC_SAMPLE_SIZE, AUDIO_FOLDER, AUDIO_OUTPUT_PATH, SCRIPT_PATH, CONFIG_PATH
-from mpegh_ui import ActionEvent, MPEGHUIManager
+from mpegh_ui import DRC_DIALOG, DRC_GENERAL, DRC_LIMITED, DRC_LOWLEVEL, DRC_NIGHT, DRC_NOISY, DRC_NONE, ActionEvent, MPEGHUIManager
 from player import Player
 
 
@@ -18,18 +18,37 @@ def main():
     )
 
     player = Player(config=config, buffer_size=2)
-    player.skip_to(3)
     player.play(thread_it=True)
 
+    uuid = "7D130000-0000-0000-0000-0000DD78AA1B"
     while(1):
-        i = input("Input: ")
-        try:
-            pre_id = int(i)
-            ui.add_event_action(ActionEvent.select_preset("E97E0000-0000-0000-0000-00002107BD59", pre_id))
-            ui.apply_scene_state()
-            player.re_fill_buffer()
-        except:
-            lang = i
+        action, *args = input("Input: ").split(" ")
+        if action == "skip":
+            time = args[0]
+            player.skip_to(int(time))
+        if action == "lang":
+            lang = args[0]
             ui.add_event_action(ActionEvent.select_language(lang))
-            ui.apply_scene_state()
-            player.re_fill_buffer()
+        elif action == "preset":
+            preset_id = args[0]
+            ui.add_event_action(ActionEvent.select_preset(uuid, preset_id))
+        elif action == "switch":
+            swtich_id, audio_id = args
+            ui.add_event_action(ActionEvent.element_switch(uuid, swith_group_id=swtich_id, swith_audio_id=audio_id))
+        elif action == "reset":
+            ui.add_event_action(ActionEvent.reset(uuid))
+        elif action == "drc":
+            drc_type = args[0]
+            drc = {
+                "none": DRC_NONE,
+                "night": DRC_NIGHT,
+                "noisy": DRC_NOISY,
+                "limited": DRC_LIMITED,
+                "lowlevel": DRC_LOWLEVEL,
+                "dialog": DRC_DIALOG,
+                "general": DRC_GENERAL,
+            }
+            ui.add_event_action(ActionEvent.drc_select(drc[drc_type.lower()]))
+
+        ui.apply_scene_state()
+        player.re_fill_buffer()

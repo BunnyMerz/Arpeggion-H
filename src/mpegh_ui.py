@@ -7,7 +7,7 @@ from utils import Command
 
 logger = logging.getLogger(__name__)
 
-
+GLOBAL_UUID = "00000000-0000-0000-0000-000000000000"
 IIS_UIM_CMD_RESET = 0
 IIS_UIM_CMD_DRC_SELECTED = 10
 IIS_UIM_CMD_DRC_BOOST = 11
@@ -28,6 +28,14 @@ IIS_UIM_CMD_AUDIO_ELEMENT_SWITCH_ELEVATION_CHANGED = 64
 IIS_UIM_CMD_AUDIO_LANGUAGE_SELECTED = 70
 IIS_UIM_CMD_INTERFACE_LANGUAGE_SELECTED = 71
 IIS_UIM_CMD_SET_GUID = 90
+
+DRC_NONE = 0
+DRC_NIGHT = 1
+DRC_NOISY = 2
+DRC_LIMITED = 3
+DRC_LOWLEVEL = 4
+DRC_DIALOG = 5
+DRC_GENERAL = 6
 
 class ActionEvent:
     def __init__(
@@ -58,6 +66,21 @@ class ActionEvent:
         return f"<ActionEvent {params} />"
     
     @classmethod
+    def reset(cls, uuid: str):
+        return ActionEvent(
+            uuid=uuid,
+            action_type=IIS_UIM_CMD_RESET,
+        )
+    
+    @classmethod
+    def drc_select(cls, drc_type: int):
+        return ActionEvent(
+            uuid=GLOBAL_UUID,
+            action_type=IIS_UIM_CMD_DRC_SELECTED,
+            param_int=drc_type,
+        )
+
+    @classmethod
     def select_preset(cls, uuid: str, preset_id: int):
         return ActionEvent(
             uuid=uuid,
@@ -68,10 +91,19 @@ class ActionEvent:
     @classmethod
     def select_language(cls, lang_name: str):
         return ActionEvent(
-            uuid="00000000-0000-0000-0000-000000000000",
+            uuid=GLOBAL_UUID,
             action_type=IIS_UIM_CMD_AUDIO_LANGUAGE_SELECTED,
             param_text=lang_name,
             param_int=0,
+        )
+    
+    @classmethod
+    def element_switch(cls, uuid: str, swith_group_id: int, swith_audio_id: int):
+        return ActionEvent(
+            uuid=uuid,
+            action_type=IIS_UIM_CMD_AUDIO_ELEMENT_SWITCH_SELECTED,
+            param_int=swith_group_id,
+            param_float=swith_audio_id,
         )
 
 class MPEGHUIManager:
