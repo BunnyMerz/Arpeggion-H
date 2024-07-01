@@ -3,7 +3,7 @@ from functools import partial
 from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL
 from tkinter.ttk import Checkbutton, Notebook, Frame, Separator
 
-from mpegh_ui import ActionEvent, MPEGHUIManager
+from mpegh_lib.mpegh_ui import ActionEvent, MPEGHUIManager
 from player import Player
 from scene.props import Prop, ProminenceLevelProp, MutingProp, AzimuthProp, ElevationProp
 from scene.scene_reader import AudioElement, AudioElementSwitch, AudioSceneConfig, Preset
@@ -101,8 +101,6 @@ class Interface:
             )
             self.ui_manager.apply_scene_state()
             self.player.re_fill_buffer(thread_it=False)
-
-        props_cache: dict[int, Prop]
 
         tab_control.bind("<<NotebookTabChanged>>", handle_tab_changed)
 

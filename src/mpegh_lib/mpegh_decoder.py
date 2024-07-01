@@ -43,9 +43,9 @@ class MPEGHDecoder:
                 buffer.set_buffer(sample_number, wave.open(str(output_path),"rb"), config.config_version_counter)
                 return True
             logger.critical("[ERROR] Error while decoding Frame %s", sample_number)
-            buffer.set_buffer(sample_number, b"", config.config_version_counter)
+            buffer.set_buffer(sample_number, None, config.config_version_counter)
             return False
         except:
-            buffer.set_buffer(sample_number, b"", config.config_version_counter)
+            buffer.set_buffer(sample_number, None, config.config_version_counter)
             logger.exception("[ERROR] Error while decoding Frame %s", sample_number)
             raise

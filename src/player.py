@@ -4,7 +4,7 @@ from wave import Wave_read
 from pyaudio import PyAudio, Stream
 
 from config import Config
-from mpegh_decoder import MPEGHDecoder
+from mpegh_lib.mpegh_decoder import MPEGHDecoder
 
 import logging
 
