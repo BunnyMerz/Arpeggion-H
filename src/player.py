@@ -109,10 +109,10 @@ class Player:
             )
             self.current_buffer_frame += 1
 
-    def re_fill_buffer(self):
+    def re_fill_buffer(self, thread_it: bool):
         self.buffer.reset_all_buffer()
         self.current_buffer_frame = self.current_frame
-        self.fill_buffer(thread_it=True)
+        self.fill_buffer(thread_it=thread_it)
 
     def play_audio(self, wave: Wave_read):
         data = wave.readframes(self.chunk)

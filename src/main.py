@@ -6,7 +6,7 @@ from scene.scene_reader import AudioSceneConfig
 
 
 def main():
-    input_file = AUDIO_FOLDER / "STD_AUDIO_X1.mp4"
+    input_file = AUDIO_FOLDER / "Sample1.mp4"
 
     ui = MPEGHUIManager(input_file = str(input_file), output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
     duration = ui.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))

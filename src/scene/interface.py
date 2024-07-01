@@ -1,11 +1,12 @@
-from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Entry, Label, HORIZONTAL
+from collections import defaultdict
+from functools import partial
+from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL
 from tkinter.ttk import Checkbutton, Notebook, Frame, Separator
 
-from mpegh_ui import MPEGHUIManager
+from mpegh_ui import ActionEvent, MPEGHUIManager
 from player import Player
-from scene.props import Prop, ProminenceLevelProp
-from scene.scene_reader import AudioElementSwitch, AudioSceneConfig
-
+from scene.props import Prop
+from scene.scene_reader import AudioElement, AudioElementSwitch, AudioSceneConfig, Preset
 
 class PropUI:
     def __init__(self, master: Misc, prop: Prop):
@@ -54,6 +55,28 @@ class Interface:
         tab_control = Notebook(self.window)
         tab_control.grid(row=0, column=0, columnspan=3)
 
+        preset_tab_cache: dict[str, Preset] = {}
+        def handle_tab_changed(event):
+            tab_name = event.widget.tab(event.widget.select(), "text")
+            new_preset = preset_tab_cache[tab_name]
+            self.ui_manager.add_event_action(ActionEvent.select_preset(self.scene.uuid, new_preset.id))
+            self.ui_manager.apply_scene_state()
+            self.player.re_fill_buffer(thread_it=False)
+
+        element_switch_cache: defaultdict[int, dict[str, AudioElement]] = defaultdict(dict)
+        def handle_element_switch(event, element_switch: AudioElementSwitch):
+            self.ui_manager.add_event_action(
+                ActionEvent.element_switch(
+                    self.scene.uuid,
+                    swith_group_id=element_switch.id,
+                    swith_audio_id=element_switch_cache[element_switch.id][event].id
+                )
+            )
+            self.ui_manager.apply_scene_state()
+            self.player.re_fill_buffer(thread_it=False)
+
+        tab_control.bind("<<NotebookTabChanged>>", handle_tab_changed)
+
         self.player.frame_slider = IntVar()
         pause_bttn = Button(self.window, text=["Pause", "Play"][self.player.is_paused], command=lambda: pause_or_resume(self.player.pause, self.player.resume, self.player.is_paused, pause_bttn))
         pause_bttn.grid(row=1, column=0)
@@ -65,6 +88,7 @@ class Interface:
         for preset in scene.presets.values():
             tab = Frame(tab_control)
             tab_control.add(tab, text=preset.get_desc(self.lang))
+            preset_tab_cache[preset.get_desc(self.lang)] = preset
             row = 0
             for audio in list(preset.audio_element_switch.values()) + list(preset.audio_elements.values()):
                 Label(tab, text=audio.get_desc(self.lang)).grid(row=row, column=MAIN_PARAGRAPH_COL)
@@ -85,11 +109,16 @@ class Interface:
                     row += 1
 
                 if isinstance(audio, AudioElementSwitch):
-                    audios_options = [x.get_desc(self.lang) for x in audio.audio_elements.values()]
+                    audios_options = []
+                    for audio_element_item in audio.audio_elements.values():
+                        txt = audio_element_item.get_desc(self.lang)
+                        audios_options.append(txt)
+                        element_switch_cache[audio.id][txt] = audio_element_item
+
                     if audios_options != []:
                         value_inside = StringVar(tab)
                         value_inside.set(audios_options[0])
-                        OptionMenu(tab, value_inside, *audios_options).grid(row=row, column=CONTENT_COL)
+                        OptionMenu(tab, value_inside, *audios_options, command=partial(handle_element_switch, element_switch=audio)).grid(row=row, column=CONTENT_COL)
                         row += 1
                 row += 1
 
