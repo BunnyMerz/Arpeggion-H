@@ -6,8 +6,8 @@ from player import Player
 def main():
     input_file = AUDIO_FOLDER / "Sample1.mp4"
 
-    ui = MPEGHUIManager(input_file = input_file, output_file = AUDIO_OUTPUT_PATH / "input.mp4", script_path = SCRIPT_PATH / "script.xml")
-    ui.apply_scene_state(CONFIG_PATH / "scene_state.xml")
+    ui = MPEGHUIManager(input_file = str(input_file), output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
+    ui.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
 
     config = Config(
         input_file = ui.output_file,
@@ -18,7 +18,7 @@ def main():
     )
 
     player = Player(config=config, buffer_size=2)
-    player.play(thread_it=True)
+    player.play(thread_it=True) # type: ignore
 
     uuid = "7D130000-0000-0000-0000-0000DD78AA1B"
     while(1):
@@ -31,10 +31,10 @@ def main():
             ui.add_event_action(ActionEvent.select_language(lang))
         elif action == "preset":
             preset_id = args[0]
-            ui.add_event_action(ActionEvent.select_preset(uuid, preset_id))
+            ui.add_event_action(ActionEvent.select_preset(uuid, int(preset_id)))
         elif action == "switch":
             swtich_id, audio_id = args
-            ui.add_event_action(ActionEvent.element_switch(uuid, swith_group_id=swtich_id, swith_audio_id=audio_id))
+            ui.add_event_action(ActionEvent.element_switch(uuid, swith_group_id=int(swtich_id), swith_audio_id=int(audio_id)))
         elif action == "reset":
             ui.add_event_action(ActionEvent.reset(uuid))
         elif action == "drc":

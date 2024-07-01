@@ -1,5 +1,6 @@
 from main import main
 import logging
+from scene.scene_reader import AudioSceneConfig
 
 try:
     from rich.logging import RichHandler
@@ -16,7 +17,9 @@ else:
         "%(name)-30s:%(lineno)4d "
         # "[%(process)d %(processName)s | %(thread)d %(threadName)s] "
         "> %(message)s"
-    ),
+    )
     logging.basicConfig(level=logging.ERROR, format=log_format)
 
-main()
+# main()
+
+a = AudioSceneConfig.start_parsing("tmp/config/scene_state.xml")

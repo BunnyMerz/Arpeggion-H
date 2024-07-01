@@ -18,7 +18,7 @@ class TargetLayout:
     FIVEPOINTONE = 6 # 5.1
 
 class Config:
-    def __init__(self, input_file: str, sample_size: int, duration_in_seconds: int, target_layout: TargetLayout, drc_boost_scale: int) -> None:
+    def __init__(self, input_file: str, sample_size: int, duration_in_seconds: int, target_layout: int, drc_boost_scale: int) -> None:
         self.sample_size = sample_size # 48 seems to be the amount of samples for the syncing of the decoder, which equates to 1 sec
         self.duration_in_seconds = duration_in_seconds
         self.input_file = input_file

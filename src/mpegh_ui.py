@@ -41,7 +41,7 @@ class ActionEvent:
     def __init__(
             self,
             uuid: str, action_type: int,
-            param_int: int = None, param_float: float = None, param_text: str = None, param_bool: bool = None,
+            param_int: int | None = None, param_float: float | None = None, param_text: str | None = None, param_bool: bool | None = None,
             version: str = "11.0",
         ) -> None:
         self.uuid = uuid
@@ -123,15 +123,15 @@ class MPEGHUIManager:
                     [str(e)+"\n" for e in self.event_actions]
                 )
 
-    def apply_scene_state(self, scene_output: str = None):
+    def apply_scene_state(self, scene_output: str | None = None):
         self.build_script()
-        command = Command(UI_MANAGER_PATH)\
+        command = Command(str(UI_MANAGER_PATH))\
             ._if(self.input_file)\
             .script(self.script_path)\
             .of(self.output_file)\
             .xmlSceneState(scene_output)
 
-        process = Popen(command, stdout=PIPE)
+        process = Popen(list(command), stdout=PIPE)
         _, error = process.communicate()
 
         if error is None:

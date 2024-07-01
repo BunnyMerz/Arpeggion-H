@@ -1,4 +1,3 @@
-from functools import partial
 from threading import Thread
 
 
@@ -18,7 +17,7 @@ def thread_it(fn):
     return _thread
 
 class Command:
-    def __init__(self, *commands: tuple[str]) -> None:
+    def __init__(self, *commands: str) -> None:
         self.commands: list[str] = list(commands)
 
     def __iter__(self):
