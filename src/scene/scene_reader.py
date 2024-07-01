@@ -68,21 +68,30 @@ class AudioElement(Element):
         azimuth: AzimuthProp | None = None
         elevation: ElevationProp | None = None
         description: dict[str, str] = {}
+        _id = int(tree.attrib["id"])
 
         for child in tree:
             if child.tag == "prominenceLevelProp":
                 prominence_level = ProminenceLevelProp.parse(child)
+                prominence_level.audio_id = _id
+                prominence_level.is_switch = False
             elif child.tag == "mutingProp":
                 muting = MutingProp.parse(child)
+                muting.audio_id = _id
+                muting.is_switch = False
             elif child.tag == "azimuthProp":
                 azimuth = AzimuthProp.parse(child)
+                azimuth.audio_id = _id
+                azimuth.is_switch = False
             elif child.tag == "elevationProp":
                 elevation = ElevationProp.parse(child)
+                elevation.audio_id = _id
+                elevation.is_switch = False
             if child.tag == "customKind":
                 description = custom_kind(child)
 
         return AudioElement(
-            _id = int(tree.attrib["id"]),
+            _id = _id,
             description = description,
             prominence_level = prominence_level,
             muting = muting,
@@ -134,7 +143,7 @@ class AudioElementSwitch(Element):
         return "-"
 
     def slider_props(self):
-        props: list[Prop | None] = [
+        props: list[ProminenceLevelProp | MutingProp | AzimuthProp | ElevationProp | None] = [
             self.prominence_level,
             self.azimuth,
             self.elevation,
@@ -149,17 +158,26 @@ class AudioElementSwitch(Element):
         elevation: ElevationProp | None = None
         description: dict[str, str] = {}
         audios: dict[int, AudioElement] = {}
+        _id = int(tree.attrib["id"])
 
         for child in tree:
             if child.tag == "prominenceLevelProp":
                 prominence_level = ProminenceLevelProp.parse(child)
+                prominence_level.audio_id = _id
+                prominence_level.is_switch = True
             elif child.tag == "mutingProp":
                 muting = MutingProp.parse(child)
+                muting.audio_id = _id
+                muting.is_switch = True
             elif child.tag == "azimuthProp":
                 azimuth = AzimuthProp.parse(child)
+                azimuth.audio_id = _id
+                azimuth.is_switch = True
             elif child.tag == "elevationProp":
                 elevation = ElevationProp.parse(child)
-            if child.tag == "customKind":
+                elevation.audio_id = _id
+                elevation.is_switch = True
+            elif child.tag == "customKind":
                 description = custom_kind(child)
             elif child.tag == "audioElements":
                 for audio_elemnt in child:
@@ -167,7 +185,7 @@ class AudioElementSwitch(Element):
                     audios[_e.id] = _e
 
         return AudioElementSwitch(
-            _id = int(tree.attrib["id"]),
+            _id = _id,
             description = description,
             prominence_level = prominence_level,
             muting = muting,

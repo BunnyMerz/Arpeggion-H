@@ -10,6 +10,8 @@ class Prop:
             min: float | None = None, max: float | None = None,
             val: bool | float | None = None, default: bool | float | None = None,
         ) -> None:
+        self.audio_id: int = -1
+        self.is_switch = False
         self.name = name
         self.is_action_allowed = is_action_allowed
         self.min = min

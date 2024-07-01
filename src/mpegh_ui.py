@@ -98,6 +98,39 @@ class ActionEvent:
         )
     
     @classmethod
+    def audio_muting_prop(cls, uuid: str, audio_id: int, is_muted: bool, is_switch: bool):
+        return ActionEvent(
+            uuid=uuid,
+            action_type=[IIS_UIM_CMD_AUDIO_ELEMENT_MUTING_CHANGED, IIS_UIM_CMD_AUDIO_ELEMENT_SWITCH_MUTING_CHANGED][is_switch],
+            param_int=audio_id,
+            param_bool=is_muted,
+        )
+    @classmethod
+    def audio_prominance_prop(cls, uuid: str, audio_id: int, value: float, is_switch: bool):
+        return ActionEvent(
+            uuid=uuid,
+            action_type=[IIS_UIM_CMD_AUDIO_ELEMENT_PROMINENCE_LEVEL_CHANGED, IIS_UIM_CMD_AUDIO_ELEMENT_SWITCH_PROMINENCE_LEVEL_CHANGED][is_switch],
+            param_int=audio_id,
+            param_float=value,
+        )
+    @classmethod
+    def audio_azimuth_prop(cls, uuid: str, audio_id: int, value: float, is_switch: bool):
+        return ActionEvent(
+            uuid=uuid,
+            action_type=[IIS_UIM_CMD_AUDIO_ELEMENT_AZIMUTH_CHANGED, IIS_UIM_CMD_AUDIO_ELEMENT_SWITCH_AZIMUTH_CHANGED][is_switch],
+            param_int=audio_id,
+            param_float=value,
+        )
+    @classmethod
+    def audio_elevation_prop(cls, uuid: str, audio_id: int, value: float, is_switch: bool):
+        return ActionEvent(
+            uuid=uuid,
+            action_type=[IIS_UIM_CMD_AUDIO_ELEMENT_ELEVATION_CHANGED, IIS_UIM_CMD_AUDIO_ELEMENT_SWITCH_ELEVATION_CHANGED][is_switch],
+            param_int=audio_id,
+            param_float=value,
+        )
+
+    @classmethod
     def element_switch(cls, uuid: str, swith_group_id: int, swith_audio_id: int):
         return ActionEvent(
             uuid=uuid,

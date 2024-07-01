@@ -5,13 +5,40 @@ from tkinter.ttk import Checkbutton, Notebook, Frame, Separator
 
 from mpegh_ui import ActionEvent, MPEGHUIManager
 from player import Player
-from scene.props import Prop
+from scene.props import Prop, ProminenceLevelProp, MutingProp, AzimuthProp, ElevationProp
 from scene.scene_reader import AudioElement, AudioElementSwitch, AudioSceneConfig, Preset
 
+
+prop_to_event = {
+    ProminenceLevelProp: ActionEvent.audio_prominance_prop,
+    MutingProp: ActionEvent.audio_muting_prop,
+    AzimuthProp: ActionEvent.audio_azimuth_prop,
+    ElevationProp: ActionEvent.audio_elevation_prop,
+}
 class PropUI:
-    def __init__(self, master: Misc, prop: Prop):
+    def __init__(self, master: Misc, prop: Prop | ProminenceLevelProp | MutingProp | AzimuthProp | ElevationProp, ui_manager: MPEGHUIManager, scene: AudioSceneConfig, player: Player):
         self.prop = prop
         self.master = master
+        self.ui_manager = ui_manager
+        self.scene = scene
+        self.player = player
+        self.var = IntVar()
+
+    def update(self, event):
+        ac = None
+        if isinstance(self.prop, ProminenceLevelProp):
+            ac = ActionEvent.audio_prominance_prop(self.scene.uuid, self.prop.audio_id, value=self.var.get(), is_switch=self.prop.is_switch)
+        if isinstance(self.prop, MutingProp):
+            ac = ActionEvent.audio_muting_prop(self.scene.uuid, self.prop.audio_id, is_muted=bool(self.var.get()), is_switch=self.prop.is_switch)
+        if isinstance(self.prop, AzimuthProp):
+            ac = ActionEvent.audio_azimuth_prop(self.scene.uuid, self.prop.audio_id, value=self.var.get(), is_switch=self.prop.is_switch)
+        if isinstance(self.prop, ElevationProp):
+            ac = ActionEvent.audio_elevation_prop(self.scene.uuid, self.prop.audio_id, value=self.var.get(), is_switch=self.prop.is_switch)
+        if ac is None:
+            return
+        self.ui_manager.add_event_action(ac)
+        self.ui_manager.apply_scene_state()
+        self.player.re_fill_buffer(thread_it=False)
 
     def grid(self, row: int, column: int):
         kw: dict[str, float | None] = {
@@ -19,7 +46,7 @@ class PropUI:
             "to": self.prop.max,
         }
         n_kw = {k: v for k,v in kw.items() if v is not None}
-        w = Scale(self.master, **n_kw, orient=HORIZONTAL) # type: ignore
+        w = Scale(self.master, **n_kw, variable=self.var, orient=HORIZONTAL, command=self.update) # type: ignore
         w.set(self.prop.val)
         w.grid(row=row, column=column)
 
@@ -75,6 +102,8 @@ class Interface:
             self.ui_manager.apply_scene_state()
             self.player.re_fill_buffer(thread_it=False)
 
+        props_cache: dict[int, Prop]
+
         tab_control.bind("<<NotebookTabChanged>>", handle_tab_changed)
 
         self.player.frame_slider = IntVar()
@@ -105,7 +134,7 @@ class Interface:
 
                 for slider_prop in audio.slider_props():
                     Label(tab, text=slider_prop.name).grid(row=row, column=CONTENT_LABEL_COL)
-                    PropUI(tab, slider_prop).grid(row=row, column=CONTENT_COL)
+                    PropUI(tab, slider_prop, ui_manager=self.ui_manager, scene=self.scene, player=self.player).grid(row=row, column=CONTENT_COL)
                     row += 1
 
                 if isinstance(audio, AudioElementSwitch):
