@@ -62,8 +62,8 @@ class ActionEvent:
             ("paramFloat", self.param_float),
             ("paramBool", self.param_bool),
         )
-        params = str.join(" ", [f'{name}="{value}"' for name, value in params if value is not None])
-        return f"<ActionEvent {params} />"
+        params_str = str.join(" ", [f'{name}="{value}"' for name, value in params if value is not None])
+        return f"<ActionEvent {params_str} />"
     
     @classmethod
     def reset(cls, uuid: str):

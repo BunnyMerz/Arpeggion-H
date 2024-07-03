@@ -250,10 +250,10 @@ class AudioSceneConfig:
     def __init__(
             self, uuid: str,
             presets: dict[int, Preset],
-            drc_info: tuple[int],
+            drc_info: tuple[int, ...],
         ) -> None:
         self.uuid = uuid
-        self.drc_info: tuple[int] = drc_info
+        self.drc_info: tuple[int, ...] = drc_info
         self.presets: dict[int, Preset] = presets
 
     @classmethod
@@ -265,7 +265,7 @@ class AudioSceneConfig:
     @classmethod
     def parse(cls, tree: XML.Element):
         presets = {}
-        drc = set()
+        drc: set[int] = set()
         for child in tree:
             if child.tag == "presets":
                 for preset in child:

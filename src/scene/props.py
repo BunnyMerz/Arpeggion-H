@@ -24,22 +24,27 @@ class Prop:
         attrib: defaultdict[str, None | str] = defaultdict(lambda: None, **tree.attrib)
         _min = float(attrib["min"]) if attrib["min"] is not None else None
         _max = float(attrib["max"]) if attrib["max"] is not None else None
+
         val = attrib["val"]
+        parsed_val: bool | float | None = None
         if val == "false" or val == "true":
-            val = val == "true"
+            parsed_val = val == "true"
         elif val is not None:
-            val = float(val)
+            parsed_val = float(val)
+
         default = attrib["def"]
+        parsed_default: bool | float | None = None
         if default == "false" or default == "true":
-            default = default == "true"
+            parsed_default = default == "true"
         elif default is not None:
-            default = float(default)
+            parsed_default = float(default)
+
         return cls(
             is_action_allowed = attrib["isActionAllowed"] is True,
             min = _min,
             max = _max,
-            val = val,
-            default = default,
+            val = parsed_val,
+            default = parsed_default,
         )
 
 class ProminenceLevelProp(Prop):

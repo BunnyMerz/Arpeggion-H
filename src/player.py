@@ -17,7 +17,7 @@ class BufferSample:
         self.buffer_event: Event = Event() # Weather the bytes are ready
         self.buffer_config: None | int = None # Which config version the buffer used
 
-    def write(self, buffer: Wave_read, config: int):
+    def write(self, buffer: Wave_read | None, config: int):
         self.buffer = buffer
         self.buffer_config = config
         self.buffer_event.set()
@@ -33,12 +33,12 @@ class Buffer:
         if new_buffer_size is None:
             new_buffer_size = self.buffer_size
         self.buffer_size = new_buffer_size
-        self.buffer_samples: list[BufferSample] = [BufferSample() for _ in range(self.buffer_size)]
+        self.buffer_samples = [BufferSample() for _ in range(self.buffer_size)]
 
     def unset_buffer(self, frame: int):
         index = frame % self.buffer_size
         self.buffer_samples[index] = BufferSample()
-    def set_buffer(self, frame: int, buffer: Wave_read, version: int):
+    def set_buffer(self, frame: int, buffer: Wave_read | None, version: int):
         index = frame % self.buffer_size
         self.buffer_samples[index].write(buffer, version)
 
@@ -141,15 +141,19 @@ class Player:
             self.pause_event.wait()
             curr_frame = self.current_frame
             buffer: BufferSample = self.buffer.read_buffer(curr_frame)
+            if buffer.buffer is None:
+                if self.current_frame == curr_frame:
+                    self.current_frame += 1
+                continue
 
             if self.current_stream_config != buffer.buffer_config:
                 logger.info("Opening new stream, config version %s", buffer.buffer_config)
                 self.close_stream()
-                self.set_stream(buffer.buffer) # type: ignore
+                self.set_stream(buffer.buffer)
                 self.current_stream_config = buffer.buffer_config
 
             logger.info("Playing Frame %s", curr_frame)
-            self.play_audio(buffer.buffer) # type: ignore
+            self.play_audio(buffer.buffer)
             self.buffer.unset_buffer(curr_frame)
 
             if self.current_frame == curr_frame:

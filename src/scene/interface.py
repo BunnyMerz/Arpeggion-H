@@ -139,7 +139,7 @@ class Interface:
         Button(self.window, text="Reset", command=lambda: reset(self.player.reset, pause_bttn)).grid(row=1, column=1)
         Scale(self.window, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).grid(row=1, column=2)
 
-        self._vars = []
+        self._vars: list[BooleanVar] = []
 
         for preset in scene.presets.values():
             tab = Frame(tab_control)
