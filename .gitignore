@@ -8,3 +8,6 @@ bin/*
 */__pycache__/
 */*/__pycache__/
 settings.json
+
+.mypy_cache
+.ruff_cache
