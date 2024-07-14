@@ -31,5 +31,6 @@ for i, arg in enumerate(argv):
             raise Exception("Missing <file_name> in -file")
         file_name = argv[i+1]
 if file_name is None:
-    raise Exception("Missing -file <file_name>")
+    file_name = ""
+    # raise Exception("Missing -file <file_name>")
 main(file_name)

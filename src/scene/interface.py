@@ -4,6 +4,7 @@ from pathlib import Path
 from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL, Menu, filedialog
 from tkinter.ttk import Checkbutton, Notebook, Frame, Separator
 
+from config import CONFIG_PATH, Config
 from mpegh_lib.mpegh_ui import ActionEvent, MPEGHUIManager
 from player import Player
 from scene.props import Prop, ProminenceLevelProp, MutingProp, AzimuthProp, ElevationProp
@@ -70,15 +71,16 @@ def reset(reset_fn, pause_bttn):
     reset_fn()
 
 class Interface:
-    def __init__(self, scene: AudioSceneConfig, player: Player, ui_manager: MPEGHUIManager, input_file: PathPointer) -> None:
+    def __init__(self, scene: AudioSceneConfig | None, player: Player, ui_manager: MPEGHUIManager, input_file: PathPointer, config: Config) -> None:
         self.scene = scene
         self.player = player
         self.ui_manager = ui_manager
         self.input_file = input_file
+        self.config = config
 
         self.window = Tk()
         self.window.title("MPEG-H 3D Audio Player")
-        self.window.resizable(None, None)
+        self.window.resizable(False, False)
 
         self.lang = "eng"
 
@@ -90,7 +92,9 @@ class Interface:
                 title = "Select a File",
                 filetypes = (("MP4 files","*.mp4*"),("all files","*.*"))
             )
-            input_file.path = Path(filename)
+            if filename != "":
+                self.set_file(filename)
+
         file = Menu(menu, tearoff=0)
         file.add_command(label='Open', command=browseFiles)
         menu.add_cascade(label='File', menu=file)
@@ -107,9 +111,27 @@ class Interface:
         language.add_command(label='Español', command=lambda: change_lang("spa"))
         menu.add_cascade(label='Language', menu=language)
         self.window.config(menu=menu)
+        self.main_frame: None | Frame = None
 
-        tab_control = Notebook(self.window)
-        tab_control.grid(row=0, column=0, columnspan=3)
+    def set_file(self, filename: str):
+        self.input_file.path = Path(filename)
+        duration = self.ui_manager.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
+        self.config.duration_in_seconds = duration
+        self.scene = AudioSceneConfig.start_parsing("tmp/config/scene_state.xml")
+        self.build()
+
+    def build(self):
+        if self.scene is None:
+            return
+
+        if self.main_frame is not None:
+            self.main_frame.destroy()
+
+        self.main_frame = Frame(self.window)
+        self.main_frame.pack()
+
+        self.tab_control = Notebook(self.main_frame)
+        self.tab_control.grid(row=0, column=0, columnspan=3)
 
         preset_tab_cache: dict[str, Preset] = {}
         def handle_tab_changed(event):
@@ -131,19 +153,19 @@ class Interface:
             self.ui_manager.apply_scene_state()
             self.player.re_fill_buffer(thread_it=False)
 
-        tab_control.bind("<<NotebookTabChanged>>", handle_tab_changed)
+        self.tab_control.bind("<<NotebookTabChanged>>", handle_tab_changed)
 
         self.player.frame_slider = IntVar()
-        pause_bttn = Button(self.window, text=["Pause", "Play"][self.player.is_paused], command=lambda: pause_or_resume(self.player.pause, self.player.resume, self.player.is_paused, pause_bttn))
+        pause_bttn = Button(self.main_frame, text=["Pause", "Play"][self.player.is_paused], command=lambda: pause_or_resume(self.player.pause, self.player.resume, self.player.is_paused, pause_bttn))
         pause_bttn.grid(row=1, column=0)
-        Button(self.window, text="Reset", command=lambda: reset(self.player.reset, pause_bttn)).grid(row=1, column=1)
-        Scale(self.window, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).grid(row=1, column=2)
+        Button(self.main_frame, text="Reset", command=lambda: reset(self.player.reset, pause_bttn)).grid(row=1, column=1)
+        Scale(self.main_frame, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).grid(row=1, column=2)
 
         self._vars: list[BooleanVar] = []
 
-        for preset in scene.presets.values():
-            tab = Frame(tab_control)
-            tab_control.add(tab, text=preset.get_desc(self.lang))
+        for preset in self.scene.presets.values():
+            tab = Frame(self.tab_control)
+            self.tab_control.add(tab, text=preset.get_desc(self.lang))
             preset_tab_cache[preset.get_desc(self.lang)] = preset
             row = 0
             for audio in list(preset.audio_element_switch.values()) + list(preset.audio_elements.values()):

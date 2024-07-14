@@ -54,18 +54,21 @@ class Player:
         self.current_stream: Stream | None = None
         self.current_stream_config: int | None = None
 
-        self._current_frame = 0
+        self._current_frame: int = 0
         self.frame_slider: IntVar | None = None
-        self.current_buffer_frame = 0
+        self.current_buffer_frame: int = 0
 
         self.config = config
         self.buffer = Buffer(buffer_size)
-        self.chunk = self.config.sample_size
 
-        self.is_paused = False
+        self.is_paused: bool = False
         self.pause_event = Event()
         self.pause_event.set()
-        self.abort = False
+        self.abort: bool = False
+
+    @property
+    def chunk(self):
+        return self.config.sample_size
 
     @property
     def current_frame(self):
@@ -133,6 +136,7 @@ class Player:
 
     @thread_it
     def play(self):
+        self.pause_event.wait()
         self.fill_buffer(thread_it=False)
         while not self.abort:
             if self.current_frame >= self.config.duration_in_seconds:

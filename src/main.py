@@ -10,20 +10,21 @@ def main(file_name: str):
     input_file = PathPointer(AUDIO_FOLDER / file_name)
 
     ui = MPEGHUIManager(input_file = input_file, output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
-    duration = ui.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
 
     config = Config(
         input_file = ui.output_file,
         sample_size = 1 * SYNC_SAMPLE_SIZE,
-        duration_in_seconds = duration, # 1 minute video
+        duration_in_seconds = 0,
         target_layout = TargetLayout.STEREO,
         drc_boost_scale=0,
     )
 
     player = Player(config=config, buffer_size=2)
+    player.pause()
     player.play(thread_it=True) # type: ignore
 
-    
-    scene = AudioSceneConfig.start_parsing("tmp/config/scene_state.xml")
-    interface = Interface(scene, player, ui, input_file)
+    interface = Interface(None, player, ui, input_file, config)
+    if file_name != "":
+        interface.set_file(file_name)
+    interface.build()
     interface.run()
