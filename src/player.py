@@ -98,7 +98,7 @@ class Player:
 
     def skip_to(self, seconds: int):
         self.current_frame = seconds
-        self.current_buffer_frame = seconds
+        self.current_buffer_frame = seconds + 1
         self.buffer.reset_all_buffer()
         self.fill_buffer(thread_it=False)
 
