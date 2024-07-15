@@ -17,4 +17,4 @@ You must install, trough pip (all listed at `requirements.txt`):
 
 ## How to run
 
-You can run the src file trough python as `python3 src [-file <file_name>]`, where `file_name` is the file containted inside the audio folder in this directory. If no file is given, the app will open empty. Click on `File > Open` and select your audio.mp4 file to be played.
+You can run trough `make run`, or the src folder trough python as `python3 src [-file <file_name>]`, where `file_name` is the file containted inside the audio folder in this directory. If no file is given, the app will open empty. Click on `File > Open` and select your audio.mp4 file to be played.
