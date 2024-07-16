@@ -88,7 +88,7 @@ class Interface:
 
         def browseFiles():
             filename = filedialog.askopenfilename(
-                initialdir = "./",
+                initialdir = "./audio",
                 title = "Select a File",
                 filetypes = (("MP4 files","*.mp4*"),("all files","*.*"))
             )
@@ -99,6 +99,17 @@ class Interface:
         file.add_command(label='Open', command=browseFiles)
         menu.add_cascade(label='File', menu=file)
 
+        def change_drc(drc: int):
+            self.config.alter_config(drc=drc)
+        def change_speaker(target_layout: int):
+            self.config.alter_config(target_layout=target_layout)
+        def change_drc_target_loudness(drc_target_loudness: int):
+            self.config.alter_config(drc_target_loudness=drc_target_loudness)
+        def change_scale_factor(scale_factor: int):
+            self.config.alter_config(scale_factor=scale_factor)
+        def change_album(album_mode: bool):
+            self.config.alter_config(album_mode=album_mode)
+
         def change_lang(lang: str):
             self.lang = lang
             self.ui_manager.add_event_action(ActionEvent.select_language(lang))
@@ -106,12 +117,37 @@ class Interface:
             self.player.re_fill_buffer(thread_it=False)
 
         language = Menu(menu, tearoff=0)
-        language.add_command(label='Inglês', command=lambda: change_lang("eng"))
+        language.add_command(label='Português', command=lambda: change_lang("por"))
+        language.add_command(label='English', command=lambda: change_lang("eng"))
         language.add_command(label='Deutsch', command=lambda: change_lang("ger"))
         language.add_command(label='Español', command=lambda: change_lang("spa"))
         menu.add_cascade(label='Language', menu=language)
         self.window.config(menu=menu)
         self.main_frame: None | Frame = None
+
+        speakers = Menu(menu, tearoff=0)
+        speakers.add_command(label='Mono', command=lambda: change_speaker(1))
+        speakers.add_command(label='Stereo', command=lambda: change_speaker(2))
+        speakers.add_command(label='5.1', command=lambda: change_speaker(6))
+        speakers.add_command(label='7.1', command=lambda: change_speaker(7))
+        speakers.add_command(label='7.1+4', command=lambda: change_speaker(19))
+        menu.add_cascade(label='Speakers', menu=speakers)
+
+        album_mode = Menu(menu, tearoff=0)
+        album_mode.add_command(label='Off', command=lambda: change_album(False))
+        album_mode.add_command(label='On', command=lambda: change_album(True))
+        menu.add_cascade(label='Album Mode', menu=album_mode)
+
+        drc = Menu(menu, tearoff=0)
+        drc.add_command(label='Off', command=lambda: change_drc(-1))
+        drc.add_command(label='None', command=lambda: change_drc(0))
+        drc.add_command(label='Night', command=lambda: change_drc(1))
+        drc.add_command(label='Noisy', command=lambda: change_drc(2))
+        drc.add_command(label='Limited', command=lambda: change_drc(3))
+        drc.add_command(label='LowLevel', command=lambda: change_drc(4))
+        drc.add_command(label='Dialog', command=lambda: change_drc(5))
+        drc.add_command(label='General', command=lambda: change_drc(6))
+        menu.add_cascade(label='DRC', menu=drc)
 
     def set_file(self, filename: str):
         self.input_file.path = Path(filename)

@@ -30,7 +30,11 @@ class MPEGHDecoder:
                 "-y", f"{sample_number * config.sample_size}",
                 "-z", f"{(sample_number * config.sample_size) + config.sample_size - 1}",
                 "-tl", f"{config.target_layout}",
-                "-db", f"{config.drc_boost_scale}"
+                "-rl", f"{config.drc_target_loudness}",
+                "-dse", f"{config.drc}",
+                "-db", f"{config.drc_boost_scale}",
+                "-dc", f"{config.scale_factor}",
+                "-dam", f"{1 if config.album_mode else 0}",
             )
 
             logger.info(" - Starting to decode Frame %s", sample_number)
