@@ -24,6 +24,9 @@ class BufferSample:
     def wait(self):
         self.buffer_event.wait()
 
+    def __str__(self) -> str:
+        return f"<BufferSample[{self.buffer is not None}]>"
+
 class Buffer:
     def __init__(self, buffer_size: int = 2) -> None:
         self.buffer_size = buffer_size
@@ -35,9 +38,12 @@ class Buffer:
         self.buffer_size = new_buffer_size
         self.buffer_samples = [BufferSample() for _ in range(self.buffer_size)]
 
-    def unset_buffer(self, frame: int):
-        index = frame % self.buffer_size
-        self.buffer_samples[index] = BufferSample()
+    def unset_buffer(self, buffer: BufferSample):
+        try:
+            index = self.buffer_samples.index(buffer)
+            self.buffer_samples[index] = BufferSample()
+        except ValueError:
+            pass
     def set_buffer(self, frame: int, buffer: Wave_read | None, version: int):
         index = frame % self.buffer_size
         self.buffer_samples[index].write(buffer, version)
@@ -98,12 +104,17 @@ class Player:
 
     def skip_to(self, seconds: int):
         self.current_frame = seconds
-        self.current_buffer_frame = seconds + 1
+        self.current_buffer_frame = seconds
         self.buffer.reset_all_buffer()
         self.fill_buffer(thread_it=False)
 
     def fill_buffer(self, thread_it: bool):
         while self.current_frame + self.buffer.buffer_size > self.current_buffer_frame:
+            logger.info(
+                "%s to %s, at %s thread[%s]",
+                self.current_frame, self.current_frame + self.buffer.buffer_size,
+                self.current_buffer_frame, thread_it
+                )
             MPEGHDecoder.decode_sample(
                 config = self.config,
                 buffer = self.buffer,
@@ -118,11 +129,12 @@ class Player:
         self.fill_buffer(thread_it=thread_it)
 
     def play_audio(self, wave: Wave_read):
+        logger.info("Reading wave")
         data = wave.readframes(self.chunk)
         while data:
-            self.pause_event.wait()
             self.current_stream.write(data) # type: ignore
             data = wave.readframes(self.chunk)
+        logger.info("Done playing wave")
 
     def resume(self):
         self.is_paused = False
@@ -131,21 +143,27 @@ class Player:
         self.is_paused = True
         self.pause_event.clear()
     def reset(self):
-        self.skip_to(0)
         self.pause()
+        self.skip_to(0)
 
     @thread_it
     def play(self):
         self.pause_event.wait()
         self.fill_buffer(thread_it=False)
         while not self.abort:
+            logger.info("")
+            logger.info("---")
             if self.current_frame >= self.config.duration_in_seconds:
+                logger.info("Done with audio. Reseting")
                 self.reset()
 
+            if not self.pause_event.isSet():
+                logger.info("Pausing...")
             self.pause_event.wait()
             curr_frame = self.current_frame
             buffer: BufferSample = self.buffer.read_buffer(curr_frame)
             if buffer.buffer is None:
+                logger.info("Empty sample")
                 if self.current_frame == curr_frame:
                     self.current_frame += 1
                 continue
@@ -158,7 +176,7 @@ class Player:
 
             logger.info("Playing Frame %s", curr_frame)
             self.play_audio(buffer.buffer)
-            self.buffer.unset_buffer(curr_frame)
+            self.buffer.unset_buffer(buffer)
 
             if self.current_frame == curr_frame:
                 self.current_frame += 1

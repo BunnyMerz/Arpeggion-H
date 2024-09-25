@@ -19,7 +19,7 @@ class MPEGHDecoder:
         sample_number: int,
     ):
         try:
-            output_path = AUDIO_OUTPUT_PATH / f"out-{(sample_number % buffer.buffer_size)+1}.wav"
+            output_path = AUDIO_OUTPUT_PATH / f"out-{(sample_number)+1}.wav"
             command = (
                 # Binary
                 DECODER_PATH,
@@ -37,13 +37,13 @@ class MPEGHDecoder:
                 "-dam", f"{1 if config.album_mode else 0}",
             )
 
-            logger.info(" - Starting to decode Frame %s", sample_number)
+            logger.debug(" - Starting to decode Frame %s", sample_number)
             process = subprocess.Popen(command, stdout=subprocess.PIPE)
             _, error = process.communicate()
-            logger.info(" - Done with Frame %s", sample_number)
+            logger.debug(" - Done with Frame %s", sample_number)
 
             if error is None: # The MPEG-H binary might not return an error when things go wrong
-                logger.info(" - Setting buffer for %s", sample_number)
+                logger.debug(" - Setting buffer for %s", sample_number)
                 buffer.set_buffer(sample_number, wave.open(str(output_path),"rb"), config.config_version_counter)
                 return True
             logger.critical("[ERROR] Error while decoding Frame %s", sample_number)
