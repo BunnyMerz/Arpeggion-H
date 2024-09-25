@@ -2,13 +2,15 @@ from config import Config, TargetLayout, SYNC_SAMPLE_SIZE, AUDIO_FOLDER, AUDIO_O
 from mpegh_lib.mpegh_ui import MPEGHUIManager
 from player import Player
 from scene.interface import Interface
-from scene.scene_reader import AudioSceneConfig
 from utils import PathPointer
 
 
 def main(file_name: str):
     input_file = PathPointer(AUDIO_FOLDER / file_name)
 
+    AUDIO_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+    CONFIG_PATH.mkdir(parents=True, exist_ok=True)
+    SCRIPT_PATH.mkdir(parents=True, exist_ok=True)
     ui = MPEGHUIManager(input_file = input_file, output_file = str(AUDIO_OUTPUT_PATH / "input.mp4"), script_path = str(SCRIPT_PATH / "script.xml"))
 
     config = Config(
