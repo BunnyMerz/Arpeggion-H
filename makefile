@@ -15,3 +15,4 @@ build:
 	-rm ./dist/$(EXE_NAME)
 	$(PYINSTALLER) src/__main__.py --name $(EXE_NAME) --onefile
 	-rm -rf ./build
+	-rm ./$(EXE_NAME).spec
