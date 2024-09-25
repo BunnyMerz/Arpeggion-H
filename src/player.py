@@ -1,5 +1,6 @@
 from threading import Event
 from tkinter import IntVar
+from typing import Callable
 from wave import Wave_read
 from pyaudio import PyAudio, Stream
 
@@ -71,6 +72,13 @@ class Player:
         self.pause_event = Event()
         self.pause_event.set()
         self.abort: bool = False
+
+        self.queued_actions: list[tuple[Callable, tuple, dict, Callable]] = []
+        self.new_queued_action: Event = Event()
+
+    def queue_action(self, action: Callable, return_callback: Callable = lambda *_, **__: None, args: tuple = (), kwargs: dict = {}):
+        self.queued_actions.append((action, args, kwargs, return_callback))
+        self.new_queued_action.set()
 
     @property
     def chunk(self):
@@ -146,26 +154,37 @@ class Player:
         self.pause()
         self.skip_to(0)
 
+    def perform_queued_actions(self):
+        self.new_queued_action.clear()
+        while len(self.queued_actions) > 0:
+            action, args, kwargs, return_callback = self.queued_actions.pop(0)
+            return_callback(
+                action(*args, **kwargs)
+            )
+
     @thread_it
     def play(self):
         self.pause_event.wait()
         self.fill_buffer(thread_it=False)
         while not self.abort:
+            self.perform_queued_actions()
             logger.info("")
             logger.info("---")
             if self.current_frame >= self.config.duration_in_seconds:
                 logger.info("Done with audio. Reseting")
                 self.reset()
+                continue
 
             if not self.pause_event.isSet():
                 logger.info("Pausing...")
-            self.pause_event.wait()
+                self.pause_event.wait()
+                continue
+
             curr_frame = self.current_frame
             buffer: BufferSample = self.buffer.read_buffer(curr_frame)
             if buffer.buffer is None:
                 logger.info("Empty sample")
-                if self.current_frame == curr_frame:
-                    self.current_frame += 1
+                self.current_frame += 1
                 continue
 
             if self.current_stream_config != buffer.buffer_config:
@@ -178,8 +197,7 @@ class Player:
             self.play_audio(buffer.buffer)
             self.buffer.unset_buffer(buffer)
 
-            if self.current_frame == curr_frame:
-                self.current_frame += 1
+            self.current_frame += 1
 
             logger.info("Filling buffer")
             self.fill_buffer(thread_it=True)

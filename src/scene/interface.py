@@ -41,7 +41,7 @@ class PropUI:
             return
         self.ui_manager.add_event_action(ac)
         self.ui_manager.apply_scene_state()
-        self.player.re_fill_buffer(thread_it=False)
+        self.re_fill_buffer(thread_it=False)
 
     def grid(self, row: int, column: int):
         kw: dict[str, float | None] = {
@@ -114,7 +114,7 @@ class Interface:
             self.lang = lang
             self.ui_manager.add_event_action(ActionEvent.select_language(lang))
             self.ui_manager.apply_scene_state()
-            self.player.re_fill_buffer(thread_it=False)
+            self.re_fill_buffer(thread_it=False)
 
         language = Menu(menu, tearoff=0)
         language.add_command(label='Português', command=lambda: change_lang("por"))
@@ -149,12 +149,17 @@ class Interface:
         drc.add_command(label='General', command=lambda: change_drc(6))
         menu.add_cascade(label='DRC', menu=drc)
 
+    def re_fill_buffer(self, thread_it: bool = False):
+        self.player.queue_action(self.player.re_fill_buffer, kwargs={"thread_it": thread_it})
+    def reset_player(self):
+        self.player.queue_action(self.player.reset)
+
     def set_file(self, filename: str):
         self.input_file.path = Path(filename)
         duration = self.ui_manager.apply_scene_state(str(CONFIG_PATH / "scene_state.xml"))
         self.config.duration_in_seconds = duration
         self.scene = AudioSceneConfig.start_parsing("tmp/config/scene_state.xml")
-        self.build()
+        self.build()    
 
     def build(self):
         if self.scene is None:
@@ -175,7 +180,7 @@ class Interface:
             new_preset = preset_tab_cache[tab_name]
             self.ui_manager.add_event_action(ActionEvent.select_preset(self.scene.uuid, new_preset.id))
             self.ui_manager.apply_scene_state()
-            self.player.re_fill_buffer(thread_it=False)
+            self.re_fill_buffer(thread_it=False)
 
         element_switch_cache: defaultdict[int, dict[str, AudioElement]] = defaultdict(dict)
         def handle_element_switch(event, element_switch: AudioElementSwitch):
@@ -187,14 +192,18 @@ class Interface:
                 )
             )
             self.ui_manager.apply_scene_state()
-            self.player.re_fill_buffer(thread_it=False)
+            self.re_fill_buffer(thread_it=False)
 
         self.tab_control.bind("<<NotebookTabChanged>>", handle_tab_changed)
 
         self.player.frame_slider = IntVar()
-        pause_bttn = Button(self.main_frame, text=["Pause", "Play"][self.player.is_paused], command=lambda: pause_or_resume(self.player.pause, self.player.resume, self.player.is_paused, pause_bttn))
+        pause_bttn = Button(
+            self.main_frame,
+            text=["Pause", "Play"][self.player.is_paused],
+            command=lambda: pause_or_resume(self.player.pause, self.player.resume, self.player.is_paused, pause_bttn)
+        )
         pause_bttn.grid(row=1, column=0)
-        Button(self.main_frame, text="Reset", command=lambda: reset(self.player.reset, pause_bttn)).grid(row=1, column=1)
+        Button(self.main_frame, text="Reset", command=lambda: reset(self.reset_player, pause_bttn)).grid(row=1, column=1)
         Scale(self.main_frame, orient=HORIZONTAL, variable=self.player.frame_slider, to=self.player.config.duration_in_seconds).grid(row=1, column=2)
 
         self._vars: list[BooleanVar] = []
