@@ -9,7 +9,7 @@ try:
 except ImportError:
     pass
 
-if try_import is not None:
+if try_import is True:
     log_format = "%(message)s"
     log_handler = RichHandler(rich_tracebacks=True, omit_repeated_times=False)
     logging.basicConfig(level=logging.DEBUG, format=log_format, handlers=[log_handler])
