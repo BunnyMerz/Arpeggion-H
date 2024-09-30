@@ -26,6 +26,9 @@ class PropUI:
         self.scene = scene
         self.player = player
         self.var = IntVar()
+    
+    def re_fill_buffer(self, thread_it: bool = False):
+        self.player.queue_action(self.player.re_fill_buffer, kwargs={"thread_it": thread_it})
 
     def update(self, event):
         ac = None
