@@ -77,6 +77,10 @@ class Player:
         self.new_queued_action: Event = Event()
 
     def queue_action(self, action: Callable, return_callback: Callable = lambda *_, **__: None, args: tuple = (), kwargs: dict = {}):
+        for i, (q_action, q_args, q_kwargs, *_) in enumerate(self.queued_actions):
+            if action == q_action:
+                self.queued_actions[i] = (action, args, kwargs, return_callback)
+                return
         self.queued_actions.append((action, args, kwargs, return_callback))
         self.new_queued_action.set()
 
