@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import partial
 from pathlib import Path
-from tkinter import BooleanVar, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL, Menu, filedialog
+from tkinter import BooleanVar, Event, IntVar, Misc, OptionMenu, Scale, StringVar, Tk, Button, Label, HORIZONTAL, Menu, filedialog
 from tkinter.ttk import Checkbutton, Notebook, Frame, Separator
 
 from config import CONFIG_PATH, Config
@@ -178,7 +178,7 @@ class Interface:
         self.tab_control.grid(row=0, column=0, columnspan=3)
 
         preset_tab_cache: dict[str, Preset] = {}
-        def handle_tab_changed(event):
+        def handle_tab_changed(event: Event):
             tab_name = event.widget.tab(event.widget.select(), "text")
             new_preset = preset_tab_cache[tab_name]
             self.ui_manager.add_event_action(ActionEvent.select_preset(self.scene.uuid, new_preset.id))

@@ -47,10 +47,7 @@ class Config:
 
     def alter_config(
             self,
-            **values: dict[
-                Literal["input_file", "sample_size" , "duration_in_seconds" , "target_layout" , "drc_boost_scale" , "drc"],
-                str | int
-            ]
+            **values: str | int
         ):
         for key, value in values.items():
             self.__setattr__(key, value)
